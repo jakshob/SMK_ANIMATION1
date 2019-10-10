@@ -1,7 +1,4 @@
-import * as THREE from './lib/three/build/three.module.js';
-
-import * as TweenMax from "./node_modules/gsap/umd/TweenMax.js";
-//import * as STLLoader from "./node_modules/stl_loader/index.js";
+//INIT
 
 var scene = new THREE.Scene();
 
@@ -25,50 +22,68 @@ window.addEventListener('resize',
 var raycaster = new THREE.Raycaster();
 var mouse = new THREE.Vector2();
 
-/*
+
+//LOADING
 var loader = new THREE.STLLoader();
-loader.load('./models/poseidon.stl', function (geometrySTL) {
-	var materialSTL = new THREE.MeshPhongMaterial({ color: 0xff5533, specular: 0x111111, shininess: 200 });
-	var meshSTL = new THREE.Mesh(geometrySTL, materialSTL);
-	meshSTL.position.set(0, - 0.25, 0.6);
-	meshSTL.rotation.set(0, - Math.PI / 2, 0);
-	meshSTL.scale.set(0.5, 0.5, 0.5);
-	meshSTL.castShadow = true;
-	meshSTL.receiveShadow = true;
-	scene.add(meshSTL);
+
+
+/*
+loader.load('./models/headOfDavid.stl', function (geometry1) {
+	console.log(geometry1);
+	var material1 = new THREE.MeshLambertMaterial({ color: 0xF7F7F7 });
+	var mesh2 = new THREE.Mesh(geometry1, material1);
+	mesh2.position.set(0, 0, -400);
+	mesh2.scale.set(1, 1, 1);
+
+	console.log(mesh2.position);
+
+	scene.add(mesh2);
+
 });
 */
+var models = ['./models/poseidon.stl', './models/davidAndGoliath.stl', './models/headOfDavid.stl', './models/venus.stl', './models/madonna.stl', './models/laocoon.stl'];
 
 
-var geometry = new THREE.BoxGeometry(1, 1, 1);
+
+
 var material = new THREE.MeshLambertMaterial({ color: 0xF7F7F7 });
 
-
-
-
 var meshList = [];
+var count = 0;
+/*
+forEachAsync(models, function(next, modelPath) {
 
 
-var meshX = -10;
-for (var i = 0; i < 15; i++) {
-	var mesh = new THREE.Mesh(geometry, material);
-	mesh.position.x = (Math.random() - 0.5) * 10;
-	mesh.position.y = (Math.random() - 0.5) * 10;
-	mesh.position.z = (Math.random() - 0.5) * 5;
-	scene.add(mesh);
-	meshList.push(mesh);
+});*/
 
-	meshX += 1;
+
+for (var i = 0; i < models.length; i++) {
+	console.log(models[1]);
+
+	loader.load(models[i], function (geometry) {
+		console.log(models[i]);
+		console.log(count);
+		
+		var mesh = new THREE.Mesh(geometry, material);
+		mesh.position.set(count*300-600, count*30, -300-count*30);
+	
+		scene.add(mesh);
+		meshList.push(mesh);
+		count++;
+	});
+
+	
+	
 }
 
 
 
-var light = new THREE.PointLight(0xFFFFFF, 1, 1000)
-light.position.set(0, 0, 0);
+var light = new THREE.PointLight(0xFF0000, 1, 1000)
+light.position.set(0, 0, -55);
 scene.add(light);
 
 var light = new THREE.PointLight(0xFFFFFF, 2, 1000)
-light.position.set(0, 0, 25);
+light.position.set(0, 0, -55);
 scene.add(light);
 
 var render = function () {
@@ -89,18 +104,29 @@ function onMouseMove(event) {
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
 	mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
 
-	var geometry1 = new THREE.BoxGeometry(1, 1, 1);
-	var material1 = new THREE.MeshLambertMaterial({ color: 0xF7F7F7 });
-	var mesh1 = new THREE.Mesh(geometry1, material1)
-	scene.add(mesh1);
+	
 
+	/*
+	loader.load('./models/headOfDavid.stl', function (geometry1) {
+		console.log(geometry1);
+		var material1 = new THREE.MeshLambertMaterial({ color: 0xF7F7F7 });
+		var mesh2 = new THREE.Mesh(geometry1, material1);
+		mesh2.position.set(0, 0, -400);
+		mesh2.scale.set(1, 1, 1);
 
+		
 
+		console.log(mesh2.position);
+		//scene.add(mesh2);
+		scene.add(mesh2);
+
+	});
+	*/
 	for (var i = 0; i < meshList.length; i++) {
 		this.tl = new TimelineMax().delay(.3);
 		this.tl.to(meshList[i].rotation, 2, { x: 1, ease: Expo.easeOut })
 			.to(meshList[i].position, 20, { y: -2, ease: Expo.easeOut }, 0)
-			.to(meshList[i].rotation, 2, { x: -1, ease: Expo.easeOut }, 2)
+			.to(meshList[i].rotation, 20, { x: -1, ease: Expo.easeOut }, 2)
 
 	}
 
