@@ -5,13 +5,15 @@ var mouse;
 var textureList = [];
 var meshList = [];
 var imgMeshList = [];
+var startPos = [];
+var ANIMATION_TIME = 30;
 init();
 animate();
 
 function init() {
 	scene = new THREE.Scene();
 
-	camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000)
+	camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
 	camera.position.z = 5;
 
 	renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -47,9 +49,9 @@ function init() {
 var random = makeid(5);*/
 
 
-	var request = new XMLHttpRequest();
+	/*var request = new XMLHttpRequest();
 	
-	request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=lundbye&offset=0&rows=1', true);
+	request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=lundbye&offset=0&rows=10', true);
 	request.onload = function() {
 		// Begin accessing JSON data here
 
@@ -73,7 +75,7 @@ var random = makeid(5);*/
 			errorMessage.textContent = `Gah, it's not working!`;
 			app.appendChild(errorMessage);
 		}
-
+		/*
 		//Spheres
 		var sphereGeometry = new THREE.BoxBufferGeometry(40, 40, 40);
 		for (var i = 0; i < textureList.length; i++) {
@@ -89,29 +91,44 @@ var random = makeid(5);*/
 			sphereMesh.rotation.set(2 * i, 2 * i, 4 * i);
 			scene.add(sphereMesh)
 			imgMeshList.push(sphereMesh);
-		}
+		}*/
 
-	}
-	request.send();
-
+	//}
+	//request.send();
+	
 	//LOADING 3D objects
 	var loader = new THREE.STLLoader();
 	
-	var models = ['./models/poseidon.stl', './models/davidAndGoliath.stl', './models/headOfDavid.stl', './models/venus.stl', './models/madonna.stl', './models/laocoon.stl'];
+	var models = ['./models/poseidon_mod.stl'/*, './models/davidAndGoliath.stl', './models/headOfDavid.stl', './models/venus.stl', './models/madonna.stl', './models/laocoon.stl'*/];
 
 	var material = new THREE.MeshLambertMaterial({ color: 0xF7F7F7 });
 	
 	var count = 0;
-	
-	for (var i = 0; i < models.length; i++) {
-		
 
-		loader.load(models[i], function (geometry) {
+	
+
+	for (var i = 0; i < 60; i++) {
+
+
+		
+		loader.load(models[0], function (geometry) {
+			var randX = randomNumber(-300, 300);
+
+			var randY = randomNumber(0, 4000);
+
+			var randZ = randomNumber(-700, -100);
+
+			var randEnd = randomNumber(-300, -200)
+
+			var randSpeed = randomNumber(0.1, 1);
+
+			startPos.push({ x: randX, y: randY, z: randZ, endY: randEnd, speed: randSpeed });
+
 			console.log(models[i]);
 			console.log(count);
-
+			console.log("x: " + randX + " y: " +  randY + " z: " + randZ);
 			var mesh = new THREE.Mesh(geometry, material);
-			mesh.position.set(count * 300 - 600, Math.random() * 100, -300 - count * 30);
+			mesh.position.set(randX, randY, randZ);
 
 			scene.add(mesh);
 			meshList.push(mesh);
@@ -123,18 +140,27 @@ var random = makeid(5);*/
 
 	//LIGHTS
 	var light = new THREE.PointLight(0xFF0000, 1, 1000)
-	light.position.set(0, 0, -55);
+	light.position.set(0, 0, -155);
 	scene.add(light);
 
 	var light = new THREE.PointLight(0xFFFFFF, 2, 1000)
-	light.position.set(0, 0, -55);
+	light.position.set(0, 0, -155);
 	scene.add(light);
 }
 
+function randomNumber(min, max) {
+	return Math.random() * (max - min) + min;
+}
 
 function animate() {
 	requestAnimationFrame(animate);
-
+	
+	for (var i = 0; i < meshList.length; i++) {
+		meshList[i].rotation.x -= 0.01 * startPos[i].speed ;
+		meshList[i].rotation.y += 0.01 * startPos[i].speed ;
+		meshList[i].rotation.z -= 0.01 * startPos[i].speed;
+		meshList[i].position.y -= startPos[i].speed;
+	}
 	renderer.render(scene, camera);
 }
 
@@ -147,17 +173,22 @@ function getNonZeroRandomNumber() {
 function onMouseMove(event) {
 	event.preventDefault();
 	
-	console.log(textureList);
-
 	mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
 	mouse.y = - (event.clientY / window.innerHeight) * 2 + 1;
-	
+	for (var i = 0; i < meshList.length; i++) {
+		meshList[i].position.y += 1;
+	}
+
+	/*
 	for (var i = 0; i < meshList.length; i++) {
 		this.tl = new TimelineMax().delay(.3);
-		this.tl.to(meshList[i].rotation, 2, { x: 1*i, ease: Expo.easeOut })
-			.to(meshList[i].position, 20, { y: -200, ease: Expo.easeOut }, 0)
-			.to(meshList[i].rotation, 20, { y: 1, ease: Expo.easeOut }, 2)
-			.to(meshList[i].rotation, 20, { x: -1, ease: Expo.easeOut }, 12)
+		this.tl.to(meshList[i].position, ANIMATION_TIME, { y: startPos[i].endY }, 0)
+			.to(meshList[i].rotation, ANIMATION_TIME/2, { z: -1, ease: Expo.easeOut }, 0)
+			.to(meshList[i].rotation, ANIMATION_TIME / 2, { z: 1, ease: Expo.easeOut }, 15)
+			.to(meshList[i].rotation, ANIMATION_TIME / 2, { y: -1, ease: Expo.easeOut }, 0)
+			.to(meshList[i].rotation, ANIMATION_TIME / 2, { y: 1, ease: Expo.easeOut }, 15)
+			.to(meshList[i].position, 0, { y: startPos[i].y, ease: Expo.easeOut }, ANIMATION_TIME)
+			.to(meshList[i].position, ANIMATION_TIME, { y: -250, ease: Expo.easeOut }, ANIMATION_TIME)
 
 	}
 
@@ -167,7 +198,7 @@ function onMouseMove(event) {
 			
 
 	}
-
+	*/
 
 }
 
