@@ -13,11 +13,15 @@ init();
 animate();
 
 function init() {
+
+	//scene
 	scene = new THREE.Scene();
 
+	//camera
 	camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000)
 	camera.position.z = 5;
 
+	//renderer
 	renderer = new THREE.WebGLRenderer({ antialias: true });
 	renderer.setClearColor("0xffffff");
 	renderer.setSize(window.innerWidth, window.innerHeight);
@@ -32,152 +36,136 @@ function init() {
 			camera.updateProjectionMatrix();
 		})
 
-	raycaster = new THREE.Raycaster();
-	mouse = new THREE.Vector2();
-
-//LOADING IMAGE DATA
-
-//Making a random string to make random highlight URL random.
-function makeid(length) {
-	var result = '';
-	var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-	var charactersLength = characters.length;
-	for (var i = 0; i < length; i++) {
-		result += characters.charAt(Math.floor(Math.random() * charactersLength));
-	}
-	return result;
-}
-
-var random = makeid(5);
-
-
-	var request = new XMLHttpRequest();
 	
-	request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=lundbye&offset=0&rows=32', true);
-	request.onload = function() {
-		// Begin accessing JSON data here
+	//LIGHTS
 
+	var light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
+	scene.add(light);
+
+	//LOADING IMAGE DATA
+
+	//Making a random string to make random highlight URL random.
+	function makeid(length) {
+		var result = '';
+		var characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+		var charactersLength = characters.length;
+		for (var i = 0; i < length; i++) {
+			result += characters.charAt(Math.floor(Math.random() * charactersLength));
+		}
+		return result;
+	}
+
+	var random = makeid(5);
+
+	//HTTP-request
+	var request = new XMLHttpRequest();
+
+	//This URL asks SMKs server for random highlights based on a random string. If you want to make a universe based on something else change the URL
+	request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=*&offset=0&rows=32&randomHighlights=' + random, true);
+
+	//This will happen when the request gets a response from SMKs server.
+	request.onload = function() {
+
+		// Begin accessing JSON data here
 		var data = JSON.parse(this.response);
 		if (request.status >= 200 && request.status < 400) {
 
+			//adding the information need to an array. We only want data with dimensions and image thumbnails in this project
 			data.items.forEach(image => {
-				if (image.image_native === undefined) {
-					console.log("nej");
-
-
-				} else if (image['dimensions']) {
-					textureList.push(image.image_native);
-					dimensions.push({ width: image.dimensions[1], height: image.dimensions[0]
-				})
-					console.log("ja");
+				if (image['dimensions'] && image.image_thumbnail !== undefined) {
+					if (image.dimensions[0] && image.dimensions[1]) {
+						textureList.push(image.image_thumbnail);
+						if (image.dimensions[0].unit === "mm") dimensions.push({ width: image.dimensions[1].value, height: image.dimensions[0].value });
+						if (image.dimensions[0].unit === "cm") dimensions.push({ width: image.dimensions[1].value * 10, height: image.dimensions[0].value * 10 });
+						console.log("ja");
+					}
+					
 				}
 
 
 			});
 		} else {
 			const errorMessage = document.createElement('marquee');
-			errorMessage.textContent = `Gah, it's not working!`;
+			errorMessage.textContent = `HTTP-request failure`;
 			app.appendChild(errorMessage);
 		}
 
 		
-		//Spheres
-		var sphereGeometry = new THREE.BoxBufferGeometry(40, 40, 40);
+		//box geometry
+		var boxGeometry = new THREE.BoxBufferGeometry(40, 40, 40);
+
+		//Looping through the textureList to make the image objects. 
 		for (var i = 0; i < textureList.length; i++) {
-			
-			
-			console.log(textureList[i]);
+
 			var textureApi = new THREE.TextureLoader().load(textureList[i]);
-			var sphereMaterial = new THREE.MeshPhongMaterial({
+			var boxMaterial = new THREE.MeshPhongMaterial({
 				specular: 0xffffff,
 				flatShading: true,
 				map: textureApi
 			});
-			var sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
+			var boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
 
-			var randX = randomNumber(-280, 280);
-			var randY = randomNumber(200, 4000);
+			//Generating random number for position in the scene
+			var randX = randomNumber(-200, 200);
+			var randY = randomNumber(200, 8000);
+			var randZ = randomNumber(-700, -100);
+			var randSpeed = randomNumber(0.1, 0.5);
 
-			var randZ = randomNumber(-500, -200);
-
-			var randSpeed = randomNumber(0.1, 1);
-
+			//Pushing the start position to a list
 			imgStartPos.push({ x: randX, y: randY, z: randZ, speed: randSpeed });
-			//sphereMesh.scale.set(dimensions[i].width, dimensions[i].height, 2);
-			//sphereMesh.scale.set(2, 2, 2);
-			sphereMesh.position.set(randX, randY, randZ);
-			
-			scene.add(sphereMesh)
-			imgMeshList.push(sphereMesh);
+
+			//Setting the meshes to the position just made
+			boxMesh.position.set(randX, randY, randZ);
+
+			//scaling the images to their dimensions. If the images are big we scale them to half their size
+			if (dimensions[i].width > 1000 || dimensions[i].height > 1000) {
+				boxMesh.scale.set(dimensions[i].width / 400, dimensions[i].height / 400, 0.01);
+			}
+			else boxMesh.scale.set(dimensions[i].width/200, dimensions[i].height/200, 0.01);
+
+			//add the mesh to the scene and to a list
+			scene.add(boxMesh)
+			imgMeshList.push(boxMesh);
 		}
 
 	}
+
+	//Send request, when the request gets the response, everything in the onload function will happen
 	request.send();
 	
 	//LOADING 3D objects
 	var loader = new THREE.STLLoader();
-	
+
+	//Makes a list with the 3D models, which currently are not available in the API
 	var models = ['./models/poseidon_mod.stl', './models/1.stl', './models/2.stl', './models/3.stl', './models/4.stl',
-	'./models/5.stl', './models/6.stl', './models/7.stl', './models/8.stl', './models/9.stl', './models/10.stl', './models/11.stl',
-		'./models/12.stl', './models/13.stl', './models/14.stl', './models/15.stl', './models/16.stl', './models/17.stl',
-		'./models/18.stl', './models/19.stl', './models/20.stl', './models/21.stl', './models/22.stl', './models/23.stl', './models/24.stl',
-		'./models/25.stl', './models/26.stl', './models/27.stl', './models/28.stl', './models/29.stl', './models/30.stl', './models/31.stl',
-		'./models/32.stl'/*, './models/davidAndGoliath.stl', './models/headOfDavid.stl', './models/venus.stl', './models/madonna.stl', './models/laocoon.stl'*/];
+		'./models/5.stl', './models/6.stl', './models/7.stl', './models/8.stl', './models/9.stl',
+		'./models/10.stl', './models/11.stl', './models/12.stl', './models/13.stl', './models/14.stl',
+		'./models/16.stl', './models/17.stl', './models/18.stl', './models/19.stl', './models/20.stl',
+		'./models/21.stl', './models/22.stl', './models/23.stl', './models/24.stl', './models/25.stl',
+		'./models/26.stl', './models/27.stl', './models/28.stl', './models/29.stl', './models/30.stl',
+		'./models/31.stl', './models/32.stl'];
 
 	var material = new THREE.MeshLambertMaterial({ color: 0xF7F7F7 });
-	
-	var count = 0;
 
-	
-
+	//Loop through the 3d models just like with the images
 	for (var i = 0; i < models.length; i++) {
-		/*
-		if (count < 32) count++;
-		else count = 0;*/
-		
+
 		loader.load(models[i], function (geometry) {
-			var randX = randomNumber(-280, 280);
-			var randY = randomNumber(200, 4000);
-
-			var randZ = randomNumber(-500, -200);
-
+			var randX = randomNumber(-200, 200);
+			var randY = randomNumber(200, 8000);
+			var randZ = randomNumber(-700, -100);
 			var randEnd = randomNumber(-300, -200)
-
-			var randSpeed = randomNumber(0.1, 1);
+			var randSpeed = randomNumber(0.1, 0.5);
 
 			startPos.push({ x: randX, y: randY, z: randZ, endY: randEnd, speed: randSpeed });
-
-			//console.log(models[i]);
-			//console.log(count);
-			//console.log("x: " + randX + " y: " +  randY + " z: " + randZ);
 			var mesh = new THREE.Mesh(geometry, material);
 			mesh.position.set(randX, randY, randZ);
 
 			scene.add(mesh);
 			meshList.push(mesh);
-			
 		});
 	}
-
 	
-
-	//LIGHTS
-	var light = new THREE.AmbientLight(0x404040);
-	light.position.set(0, 0, -155);
-	scene.add(light);
-
-	/*
-	var light = new THREE.PointLight(0xFF0000, 1, 1000)
-	light.position.set(0, 0, -155);
-	scene.add(light);*/
-
-	var light = new THREE.HemisphereLight(0xffffbb, 0x080820, 1);
-	scene.add(light);
-	/*
-	var light = new THREE.PointLight(0xFFFFFF, 2, 1000)
-	light.position.set(0, 0, -155);
-	scene.add(light);
-*/
 }
 
 function randomNumber(min, max) {
@@ -188,15 +176,13 @@ function animate() {
 	requestAnimationFrame(animate);
 
 	for (var i = 0; i < imgMeshList.length; i++) {
-		imgMeshList[i].scale.x = 3;
-		imgMeshList[i].scale.y = 4;
-		imgMeshList[i].scale.z = 0.2;
+
 		imgMeshList[i].rotation.x -= 0.01 * imgStartPos[i].speed;
 		imgMeshList[i].rotation.y += 0.01 * imgStartPos[i].speed;
 		imgMeshList[i].rotation.z -= 0.01 * imgStartPos[i].speed;
 		if (imgMeshList[i].position.y < -400) imgMeshList[i].position.y = imgStartPos[i].y;
 		else imgMeshList[i].position.y -= imgStartPos[i].speed;
-		//console.log(meshList[i].position.y);
+	
 	}
 
 	for (var i = 0; i < meshList.length; i++) {
@@ -205,16 +191,21 @@ function animate() {
 		meshList[i].rotation.z -= 0.01 * startPos[i].speed;
 		if (meshList[i].position.y < -400) meshList[i].position.y = startPos[i].y;
 		else meshList[i].position.y -= startPos[i].speed;
-		//console.log(meshList[i].position.y);
+		
 	}
 	renderer.render(scene, camera);
 }
 
+/*
 function getNonZeroRandomNumber() {
 	var random = Math.floor(Math.random() * 19) - 9;
 	if (random == 0) return getNonZeroRandomNumber();
 	return random;
-}
+}*/
+
+
+//This part can be used if you want to make timeline based animations
+
 /*
 function onMouseMove(event) {
 	event.preventDefault();
