@@ -64,7 +64,7 @@ function init() {
 	//request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=*&offset=0&rows=32&randomHighlights=' + random, true);
 	
 
-	request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=statue&offset=0&rows=32', true)
+	request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=hest&offset=0&rows=32', true)
 	//This will happen when the request gets a response from SMKs server.
 	request.onload = function() {
 
