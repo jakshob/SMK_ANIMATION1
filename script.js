@@ -13,7 +13,7 @@ init();
 animate();
 
 function init() {
-
+	console.log("statue");
 	//scene
 	scene = new THREE.Scene();
 
@@ -79,7 +79,7 @@ function init() {
 						textureList.push(image.image_thumbnail);
 						if (image.dimensions[0].unit === "mm") dimensions.push({ width: image.dimensions[1].value, height: image.dimensions[0].value });
 						if (image.dimensions[0].unit === "cm") dimensions.push({ width: image.dimensions[1].value * 10, height: image.dimensions[0].value * 10 });
-						console.log("ja");
+						//console.log("ja");
 					}
 					
 				}
