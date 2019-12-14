@@ -61,10 +61,10 @@ function init() {
 	var request = new XMLHttpRequest();
 
 	//This URL asks SMKs server for random highlights based on a random string. If you want to make a universe based on something else change the URL
-	//request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=*&offset=0&rows=32&randomHighlights=' + random, true);
+	request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=*&offset=0&rows=32&randomHighlights=' + random, true);
 	
 
-	request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=kat&offset=0&rows=32', true)
+	//request.open('GET', 'https://api.smk.dk/api/v1/art/search/?keys=kat&offset=0&rows=32', true)
 	//This will happen when the request gets a response from SMKs server.
 	request.onload = function() {
 
